@@ -20,9 +20,9 @@ class PyCom:
             print(self._ser.name)
             print(self._ser.baudrate)
 
-    def _send_command(self, command, data=b'', preamble=b'') -> Tuple[int, int, bytes]:
+    def _send_command(self, command, data=b'', preamble=b'') -> tuple[int, int, bytes]:
 
-        self._ser.write(preamble + b'\xfe\xfe\x6e\xe0' + command + data + b'\xfd')
+        self._ser.write(preamble + b'\xfe\xfe\x48\xe0' + command + data + b'\xfd')
 
         # Our cable reads what we send, so we have to remove this from the buffer first
         self._ser.read_until(expected=b'\xfd')
@@ -215,7 +215,13 @@ def ReadIniFile():
         # check if Radio section exists
         if Config.has_section('Radio'):
             radioModel = Config.get('Radio', 'model')
-            if radioModel == 'ic756pro3':
+            if radioModel == 'ic706':
+                preamble = b'\xfe\xfe\x48\xe0'
+                yaesu = False
+                kenwood = False
+                trxAddress = b'\x48'
+                flex = False
+            elif radioModel == 'ic756pro3':
                 preamble = b'\xfe\xfe\x6e\xe0'
                 yaesu = False
                 kenwood = False
@@ -229,32 +235,38 @@ def ReadIniFile():
                 newIcom = False
                 flex = False
             elif radioModel == 'ts590':
+                trxAddress = b"\x00"
                 yaesu = False
                 kenwood = True
                 newIcom = False
                 flex = False
             elif radioModel == "kenwood":
+                trxAddress = b"\x00"
                 yaesu = False
                 kenwood = True
                 newIcom = False
                 flex = False
             elif radioModel == "SDRConsole":
+                trxAddress = b"\x00"
                 yaesu = False
                 kenwood = True
                 newIcom = False
                 flex = False
             elif radioModel == "RohdesShwartz":
+                trxAddress = b"\x00"
                 yaesu = False
                 RohdesShwartz = True
                 newIcom = False
                 flex = False
             elif radioModel == "Yaesu":
+                trxAddress = b"\x00"
                 yaesu = True
                 kenwood = True
                 newIcom = False
                 flex = False
                 RohdesShwartz = False
             elif radioModel == "Flex":
+                trxAddress = b"\x00"
                 flex = True
                 yaesu = False
                 kenwood = False
@@ -410,8 +422,8 @@ def DownIcom(radioSer, vfoStep):
 
 
 def UpIcom(radioSer, vfoStep):
-    frequency = 0
-    while frequency == 0 or frequency is None:
+    frequency = 0.0
+    while frequency == 0.0 or frequency is None:
         frequency = update_freqIcom()
         if frequency < 1800000:
             frequency = 0
@@ -454,38 +466,22 @@ def setFrequency(radioSer, freq):
 
 
 def update_freqIcom(*args):
+    f = 0.0
     strCat = preamble + (b"\x03\xfd")
     radioSer.write(strCat)
-    header = b"\xfe\xfe\xe0" + trxAddress
-    lineSDR = b""
-    countSDR = 0
-    s = b""
-    result = ""
-    while countSDR < 10:
-        s = radioSer.read()
-        lineSDR += s
-        countSDR = len(lineSDR)
-        if s != b"":
-            result += str("%02x" % ord(s))
-        if s == b"\xFD":
-            lineSDR = b""
-            result = ""
-
-    if lineSDR[0:4] == header and len(result) > 16:
-        f = 0
-        fr = []
-        res = 0
-        for k in [8, 9, 6, 7, 4, 5, 2, 3]:
-            res = int(result[k+8])
-            fr.append(res)
-
-        f = fr[0] * 10000000 + fr[1] * 1000000 + fr[2] * 100000 + fr[3] * 10000 + fr[4] * 1000 + fr[5] * 100 + \
-            fr[6] * 10 + fr[7]
-        # rx_freq = lineSDR[5:11]
-        # f = int(rx_freq)
-        # label_update(label_vfoA, f)
-    else:
-        f = 0
+    header = b"\xfe\xfe" + trxAddress + b"\xe0\x03\xfd\xfe\xfe\xe0" + trxAddress
+    #result = b""
+    #countSDR = 0
+    s = b''
+    byte_freq = b''
+    str_freq = ''
+    big_endian_bytes = b''
+    result = radioSer.read(17)
+    #if result[16] == b'\xfd':
+    byte_freq = result[11:16]
+    big_endian_bytes = byte_freq[::-1]
+    str_freq = big_endian_bytes.hex()
+    f = int(str_freq) / 1000
     return f
 
 
@@ -508,7 +504,7 @@ def update_freq(*args):
         rx_freq = lineSDR[4:15]
     else:
         freq = lineSDR[0:2]
-        rx_freq = lineSDR[2:11]
+        rx_freq = lineSDR[2:13]
 
     if freq == header:
         f = int(rx_freq)
@@ -655,7 +651,7 @@ def GetMode(*args):
         strCat = 'ZZMD;'
         header = 'ZZMD'
     else:
-        strCat = 'MD0;'
+        strCat = 'MD;'
         header = 'MD'
     radioSer.write(strCat.encode())
     lineSDR = ""
@@ -668,17 +664,29 @@ def GetMode(*args):
         rx_mode = lineSDR[4:6]
     else:
         rx = lineSDR[0:2]
-        rx_mode = lineSDR[2:4]
+        rx_mode = lineSDR[2]
+
         if debug == 2: print("Power is " + rx_mode)
         
     if rx == header:
-        if flex: mode = mode_Flex[rx_mode]
-        elif yaesu or kenwood:
-            mode = mode_Yaesu[rx_mode]
-        else: mode = "" 
-        
+        if rx_mode == '7':
+            mode = "CW"
+        elif rx_mode == '1':
+            mode = 'LSB'
+        elif rx_mode == '2':
+            mode = "USB"
+        elif rx_mode == '3':
+            mode = 'CW'
+        elif rx_mode == '4':
+            mode = 'FM'
+        elif rx_mode == '5':
+            mode = 'AM'
+        elif rx_mode == '6':
+            mode = 'DIGL'
+        elif rx_mode == '9':
+            mode = "DIGU"
+        else: mode = ""
     else: mode = "Can't Read" 
-
     return mode
 
 ########################################
@@ -740,7 +748,7 @@ red = (255, 0, 0)
 yellow = (255, 255, 25)
 blue = (132, 180, 255)
 f = 0.0
-ACTION = 7
+ACTION = 1
 noAction = 0
 # vfoStep = 100 now as argument --vfostep
 
@@ -768,22 +776,25 @@ while launched:
         elif event.type == pygame.USEREVENT:
             while f == 0.0:
                 try:
-                    if (kenwood or flex):
-                        f = update_freq()
-                        fa = f / 1000
-                        strFreq = str("%6.3f" % fa)
-                        
-                        pwrStr = '' # read_power()
-                        mode = '' # GetMode()
-                    else:
-                        f = update_freqIcom() / 1000
-                        pwrStr = ""
-                        mode = ""
-                        trx = str(PyCom.read_operating_mode())
-                        print('transceiver ID is ' + trx)
+                     if (kenwood or flex):
+                            f = update_freq()
+                            fa = f / 1000
+                            strFreq = str("%6.3f" % fa)
+
+                            pwrStr = '' # read_power()
+                            mode = GetMode()
+                     else:
+                            f = update_freqIcom()
+                            pwrStr = ""
+                            mode = ""
+                            #trx = str(PyCom.read_operating_mode())
+                            #print(trx)
+                            trx = ''
                 except:
-                    f = 0.0
-                    sys.exit()
+                     #f = 0.0
+                     print('cant read the trx')
+                     #f = update_freqIcom()
+                     sys.exit()
             window_surface.fill(black)
             if kenwood or flex:
                 text = digital_font.render(strFreq, True, yellow)
@@ -794,20 +805,7 @@ while launched:
             window_surface.blit(text, [10, 10])
             window_surface.blit(line2, [10, 150])
             pygame.display.flip()
-    """
-    elif event.type == pygame.KEYDOWN:
-        if event.key == pygame.K_DOWN:
-            DownIcom(radioSer, 10)
-        elif event.key == pygame.K_UP:
-            UpIcom(radioSer, 10)
-        elif event.type == pygame.MOUSEWHEEL:
-            if event.y == -1:
-                UpIcom(radioSer, 10)
-            else:
-                DownIcom(radioSer, 10)
-        elif event.type == pygame.MIDIIN:
-            print(event)
-    """
+
     clock.tick(60)  # 60 images par seconde (60 fps)
     if my_input.poll():
         midi_value = my_input.read(1)[0]
@@ -829,21 +827,21 @@ while launched:
         if device == WT_DJ_JOGORPOT:  #  JOG or potentiometer
             if status == WT_DJ_JOGA:        # JOG A
                 f = 0.0
-                if noAction < ACTION:  # 1 Action on 20 increment of the Jog
+                """"if noAction < ACTION:  # 1 Action on 20 increment of the Jog
                     noAction += 1
                 if noAction >= ACTION:
-                    noAction = 0
-                    if kenwood or flex:
-                        vfo = "A"
-                        if control > 64:
-                            DownKenwood(vfoStep, vfo)
-                        else:
-                            UpKenwood(vfoStep, vfo)
+                    noAction = 0 """
+                if kenwood or flex:
+                    vfo = "A"
+                    if control > 64:
+                        DownKenwood(vfoStep, vfo)
                     else:
-                        if control > 64:  # Down
-                            DownIcom(radioSer, vfoStep)
-                        else:
-                            UpIcom(radioSer, vfoStep)
+                        UpKenwood(vfoStep, vfo)
+                else:
+                    if control > 64:  # Down
+                        DownIcom(radioSer, vfoStep)
+                    else:
+                        UpIcom(radioSer, vfoStep)
             elif status == WT_DJ_JOGB:      # JOG B
                 if (control == 127) : # RIT down
                     if flex:

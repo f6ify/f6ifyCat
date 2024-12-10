@@ -1,4 +1,8 @@
-V1.2 P. Nouchi - F6IFY le 6 janvier 2023
+v1.4 P. Nouchi - F6IFY le 10 Decembre 2024
+	Add mode reading
+v1.3 P. Nouchi - F6IFY le 27 Mars 2023
+	- add ic706
+v1.2 P. Nouchi - F6IFY le 6 janvier 2023
 	- add flex 6400M @ F4KJN
 v1.1 P. Nouchi - F6IFY le 2 Decembre 2021
 	- start interface of the Yaesu transceiver (for the FTDX101 @TM3R)
