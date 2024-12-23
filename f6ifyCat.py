@@ -543,6 +543,24 @@ def read_power(*args):
         rx_power = ""
     return rx_power
 
+def read_nb(*arg):
+    strCat = 'NB;'
+    header = 'NB'
+    radioSer.write(strCat.encode())
+    lineSDR = ""
+    s = ""
+    while s != ";":
+        s = radioSer.read().decode("utf-8")
+        lineSDR += s
+    rxNB = lineSDR[0:2]
+    nb = lineSDR[2]
+    if rxNB == header:
+        nb = lineSDR[2]
+    if debug == 2: print("NB is " + nb)
+    else:
+        rxNB = ""
+    return nb
+
 def update_freqB(*args):
     f = 0
     if kenwood:
@@ -865,7 +883,13 @@ while launched:
                 # DSP Filtering Bandwidth for VFO A
                 SendToRadio("ZZFI0" + str(math.floor(7 * control / 127)) + ";")
 
-            elif (status == WT_DJ_CROSSFADER) and kenwood: # Crossfader for power (0 --> 100 Watts)
+            elif (status == WT_DJ_POTVOLUMEA) and kenwood: # Potard for AF Volume (0 --> 100 %)
+                vol = math.floor(255 * control / 127)
+                volStr = str("%03d" % vol)
+                volString = "AG0" + volStr + ";"
+                SendToRadio(volString)
+                print(volString)
+            elif (status == WT_DJ_CROSSFADER) and kenwood: # # Crossfader for power (0 --> 120 Watts)Potard for AF Volume (0 --> 100 Watts)
                 pwr = math.floor(200 * control / 127)
                 pwrStr = str("%03d" % pwr)
                 # print( pwrStr)
@@ -890,9 +914,16 @@ while launched:
                     SendToRadio("TX0;")
                 elif control == 0 and kenwood:
                     SendToRadio("RX;")
-            elif status == WT_DJ_BTN_4A:  # Button 4A for filters
+            elif status == WT_DJ_BTN_4B:  # Button 4B for Noise Blanker
+                if read_nb() == "0":
+                    nbToSent = "NB1;"
+                    print("Sent command Noise Blanker On" )
+                else:
+                    nbToSent = "NB0;"
+                    print("Sent command Noise Blanker Off")
                 if control == 127 and kenwood:
-                    SendToRadio("PC000;")
+                    SendToRadio(nbToSent)
+
             elif status == WT_DJ_BTN_SYNC_B:       # Button SYNC_B
                 if control == 127 and kenwood:
                     SendToRadio("RT0;")   # RIT Off
