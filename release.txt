@@ -1,3 +1,5 @@
+v1.5 P. Nouchi le 23 December 2024
+    Remove visual interface to accelerate the process
 v1.4 P. Nouchi - F6IFY le 10 Decembre 2024
 	Add mode reading
 v1.3 P. Nouchi - F6IFY le 27 Mars 2023

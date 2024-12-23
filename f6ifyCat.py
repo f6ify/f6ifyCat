@@ -12,65 +12,65 @@ import pygame.midi
 import serial
 from serial import SerialException
 
-class PyCom:
-    def __init__(self, debug: bool = False):
-        self._ser = serial.Serial('com1')
-        self._debug = debug
-        if self._debug:
-            print(self._ser.name)
-            print(self._ser.baudrate)
-
-    def _send_command(self, command, data=b'', preamble=b'') -> tuple[int, int, bytes]:
-
-        self._ser.write(preamble + b'\xfe\xfe\x48\xe0' + command + data + b'\xfd')
-
-        # Our cable reads what we send, so we have to remove this from the buffer first
-        self._ser.read_until(expected=b'\xfd')
-
-        # Now we are reading replies
-        reply = self._ser.read_until(expected=b'\xfd')
-
-        return reply
-
-    def power_on(self):
-        wakeup_preamble_count = 8
-        if self._ser.baudrate == 19200:
-            wakeup_preamble_count = 27
-        elif self._ser.baudrate == 9600:
-            wakeup_preamble_count = 14
-
-        self._send_command(b'\x18\x01', preamble=b'\xfe' * wakeup_preamble_count)
-
-    def power_off(self):
-        self._send_command(b'\x18\x00')
-
-    def read_transceiver_id(self):
-        reply = self._send_command(b'\x19\x00')
-        return reply
-
-    def read_operating_frequency(self):
-        reply = self._send_command(b'\x03')
-        return reply
-
-    def read_operating_mode(self):
-        reply = self._send_command(b'\x04')
-        return reply
-
-    def send_operating_frequency(self, frequency: float):
-        reply = self._send_command(b'\x03')
-        return reply
-
-    def read_operating_mode(self):
-        reply = self._send_command(b'\x04')
-        return reply
-
-    def read_squelch_status(self):
-        reply = self._send_command(b'\x15\x01')
-        return reply
-
-    def read_squelch_status2(self):
-        reply = self._send_command(b'\x15\x05')
-        return reply
+# class PyCom:
+#     def __init__(self, debug: bool = False):
+#         self._ser = serial.Serial('com1')
+#         self._debug = debug
+#         if self._debug:
+#             print(self._ser.name)
+#             print(self._ser.baudrate)
+#
+#     def _send_command(self, command, data=b'', preamble=b'') -> tuple[int, int, bytes]:
+#
+#         self._ser.write(preamble + b'\xfe\xfe\x48\xe0' + command + data + b'\xfd')
+#
+#         # Our cable reads what we send, so we have to remove this from the buffer first
+#         self._ser.read_until(expected=b'\xfd')
+#
+#         # Now we are reading replies
+#         reply = self._ser.read_until(expected=b'\xfd')
+#
+#         return reply
+#
+#     def power_on(self):
+#         wakeup_preamble_count = 8
+#         if self._ser.baudrate == 19200:
+#             wakeup_preamble_count = 27
+#         elif self._ser.baudrate == 9600:
+#             wakeup_preamble_count = 14
+#
+#         self._send_command(b'\x18\x01', preamble=b'\xfe' * wakeup_preamble_count)
+#
+#     def power_off(self):
+#         self._send_command(b'\x18\x00')
+#
+#     def read_transceiver_id(self):
+#         reply = self._send_command(b'\x19\x00')
+#         return reply
+#
+#     def read_operating_frequency(self):
+#         reply = self._send_command(b'\x03')
+#         return reply
+#
+#     def read_operating_mode(self):
+#         reply = self._send_command(b'\x04')
+#         return reply
+#
+#     def send_operating_frequency(self, frequency: float):
+#         reply = self._send_command(b'\x03')
+#         return reply
+#
+#     def read_operating_mode(self):
+#         reply = self._send_command(b'\x04')
+#         return reply
+#
+#     def read_squelch_status(self):
+#         reply = self._send_command(b'\x15\x01')
+#         return reply
+#
+#     def read_squelch_status2(self):
+#         reply = self._send_command(b'\x15\x05')
+#         return reply
 
 WT_DJ_JOGORPOT  = 176
 WT_DJ_JOGA = 48
@@ -530,11 +530,11 @@ def read_power(*args):
         lineSDR += s
 
     if flex:
-        rxPwr = lineSDR[0:4]
+        rxPwr = lineSDR[4:6]
         pwr = lineSDR[4:7]
     else:
         rxPwr = lineSDR[0:2]
-        pwr = lineSDR[2:5]
+        pwr = lineSDR[2:4] + "," + lineSDR[4]
     if rxPwr == header:
         rx_power = pwr
         if debug == 2: print("Power is " + rx_power)
@@ -592,7 +592,6 @@ def update_freqB(*args):
             # rx_freq = lineSDR[5:11]
             # f = int(rx_freq)
     return f
-
 
 def SetFrequencykenwood(dwFrequency, vfo):
     if yaesu == True:
@@ -742,13 +741,13 @@ except SerialException:
     sys.exit(1)
 
 pygame.init()
-window_resolution = (640, 180)
+"""window_resolution = (640, 180)
 black = (0, 0, 0)
 red = (255, 0, 0)
 yellow = (255, 255, 25)
 blue = (132, 180, 255)
 f = 0.0
-ACTION = 1
+ACTION = 5
 noAction = 0
 # vfoStep = 100 now as argument --vfostep
 
@@ -758,7 +757,7 @@ window_surface = pygame.display.set_mode(window_resolution)
 digital_font = pygame.font.Font("digital-7 (mono).ttf", 130)
 font_line2 = pygame.font.Font("digital-7 (mono).ttf", 24)
 digital_font.set_underline(True)
-
+"""
 clock = pygame.time.Clock()
 pygame.time.set_timer(pygame.USEREVENT, 100)
 
@@ -769,6 +768,9 @@ blinkLED(2, 0.3, midi_out)
 print("Nom du programme = " + __name__)
 launched = True
 loopi = 0
+f = 0.0
+ACTION = 5
+noAction = 0
 while launched:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -781,8 +783,10 @@ while launched:
                             fa = f / 1000
                             strFreq = str("%6.3f" % fa)
 
-                            pwrStr = '' # read_power()
+                            pwrStr = read_power()
                             mode = GetMode()
+                            mode_kenwood = ""
+                            if debug >= 1: print("Mode is :", mode)
                      else:
                             f = update_freqIcom()
                             pwrStr = ""
@@ -795,18 +799,21 @@ while launched:
                      print('cant read the trx')
                      #f = update_freqIcom()
                      sys.exit()
+
+    """
             window_surface.fill(black)
             if kenwood or flex:
                 text = digital_font.render(strFreq, True, yellow)
             else:
                 text = digital_font.render(f"{f:5.03f}", True, yellow)
             
-            line2 = font_line2.render(f"vfo Step = {vfoStep} Hz, Power = " + pwrStr + "W" + " and Mode is " + mode, True, yellow)
+            line2 = font_line2.render(f"vfo Step = {vfoStep} Hz, Power = " + pwrStr + " Watts" + " and Mode is " + mode, True, yellow)
             window_surface.blit(text, [10, 10])
             window_surface.blit(line2, [10, 150])
             pygame.display.flip()
 
-    clock.tick(60)  # 60 images par seconde (60 fps)
+        clock.tick(30)  # 60 images par seconde (60 fps)
+    """
     if my_input.poll():
         midi_value = my_input.read(1)[0]
         if debug >= 1: print(midi_value)
@@ -819,71 +826,93 @@ while launched:
         control = data[2]
         value = data[3]
         # for debugging
-        # print(device)
+        if debug >= 1: print(device, status, control, value)
         # print(status)
         # print(control)
         # print(value)
 
         if device == WT_DJ_JOGORPOT:  #  JOG or potentiometer
-            if status == WT_DJ_JOGA:        # JOG A
+            if noAction < ACTION:  # 1 Action on 20 increment of the Jog
+                noAction += 1
+            if noAction >= ACTION:
+                noAction = 0
+            if status == WT_DJ_JOGA and noAction == 0:        # JOG A
                 f = 0.0
-                """"if noAction < ACTION:  # 1 Action on 20 increment of the Jog
-                    noAction += 1
-                if noAction >= ACTION:
-                    noAction = 0 """
                 if kenwood or flex:
                     vfo = "A"
-                    if control > 64:
+                    if control == 127:
                         DownKenwood(vfoStep, vfo)
-                    else:
+                    elif control == 1:
                         UpKenwood(vfoStep, vfo)
                 else:
-                    if control > 64:  # Down
+                    if control == 127 :  # Down
                         DownIcom(radioSer, vfoStep)
-                    else:
+                    elif control == 1:
                         UpIcom(radioSer, vfoStep)
             elif status == WT_DJ_JOGB:      # JOG B
                 if (control == 127) : # RIT down
                     if flex:
                         SendToRadio("ZZRD;")        # Rit Down
                     else:
-                        SendToRadio("RD0005;")      # RIT down 5 Hz command
+                        SendToRadio("RD00025;")      # RIT down 5 Hz command
                 elif (control == 1) :   # RIT Up
                     if flex:
                         SendToRadio("ZZRU;")        # Rit Up
                     else:
-                        SendToRadio("RU0005;")            # RIT up 5 Hz command
+                        SendToRadio("RU00025;")            # RIT up 5 Hz command
             elif (status == WT_DJ_POTMEDIUMA) and flex:    # Pot. Medium A
                 # DSP Filtering Bandwidth for VFO A
                 SendToRadio("ZZFI0" + str(math.floor(7 * control / 127)) + ";")
-                
-            elif (status == WT_DJ_CROSSFADER) and flex: # Crossfader for power (0 --> 100 Watts)
-                pwr = math.floor(100 * control / 127)
+
+            elif (status == WT_DJ_CROSSFADER) and kenwood: # Crossfader for power (0 --> 100 Watts)
+                pwr = math.floor(200 * control / 127)
                 pwrStr = str("%03d" % pwr)
-                pwrString = "ZZPC" + pwrStr + ";"
+                # print( pwrStr)
+                pwrString = "PC" + pwrStr + ";"
                 SendToRadio(pwrString)
-                
+
         elif device == WT_DJ_PUSH_BUTTON:  # Buttons
-            if status == WT_DJ_BTN_REC and control > 64:  # Automix button
+            if status == WT_DJ_BTN_REC and control > 64:  # Rec button
+                print("VfoStep is", vfoStep)
                 if vfoStep >= 1000:
-                    # vfoStep = args.vfostep
+                        # vfoStep = args.vfostep
                     vfoStep = 100
                 elif vfoStep == 100:
+                    vfoStep = 25
+                elif vfoStep == 25:
                     vfoStep = 10
                 elif vfoStep == 10:
                     vfoStep = 1
                 else: vfoStep = 1000
             elif status == WT_DJ_BTN_3A:       # Button 3A for PTT
-                if control == 127 and flex:     
-                    SendToRadio("ZZTX1;")
-                elif control == 0 and flex:
-                    SendToRadio("ZZTX0;")
-            elif status == WT_DJ_BTN_SYNC_B:       # Button SYNC_B      
-                if control == 127 and flex:     
-                    SendToRadio("ZZRT0;")   # RIT Off
-            elif status == WT_DJ_BTN_CUE_B:       # Button CUE_B      
-                if control == 127 and flex:     
-                    SendToRadio("ZZRC;")   # RIT Clear
-            elif status == WT_DJ_BTN_PLAY_B:       # Button :>      
-                if control == 127 and flex:     
-                    SendToRadio("ZZRT1;")   # RIT On
+                if control == 127 and kenwood:
+                    SendToRadio("TX0;")
+                elif control == 0 and kenwood:
+                    SendToRadio("RX;")
+            elif status == WT_DJ_BTN_4A:  # Button 4A for filters
+                if control == 127 and kenwood:
+                    SendToRadio("PC000;")
+            elif status == WT_DJ_BTN_SYNC_B:       # Button SYNC_B
+                if control == 127 and kenwood:
+                    SendToRadio("RT0;")   # RIT Off
+            elif status == WT_DJ_BTN_CUE_B:       # Button CUE_B
+                if control == 127 and kenwood:
+                    SendToRadio("RC;")   # RIT Clear
+            elif status == WT_DJ_BTN_PLAY_B:  # Button PLAY_B
+                if control == 127 and kenwood:
+                    SendToRadio("RT1;")  # RIT on
+            elif status == WT_DJ_BTN_MODE :      # Button Mode
+                if control == 127 and kenwood:
+                    mode = GetMode()
+                    print(mode)
+                    if mode == "CW":
+                        mode_kenwood = "MD1;"
+                    elif mode == "LSB":
+                        mode_kenwood = "MD2;"
+                    elif mode == "USB":
+                        mode_kenwood = "MD4;"
+                    elif mode == "FM":
+                        mode_kenwood = "MD3;"
+
+                    print(mode_kenwood)
+                    SendToRadio(mode_kenwood)
