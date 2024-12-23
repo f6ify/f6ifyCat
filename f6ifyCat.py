@@ -1,3 +1,4 @@
+# v1.5 P. Nouchi le 23 Decembre 2024
 import math
 import sys
 import time
