@@ -5,7 +5,7 @@ Python 3 script to interface the DJControl to TRXs:
 	
 	- Kenwood
 	
-	- SunSDR2pro	- Tested @F6BEE
+	- SunSDR2pro	- Tested @F6BEE and @F6IFY
 	
 	- SunSDR2-DX	- Tested @F5RRS
 	

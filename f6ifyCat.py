@@ -617,7 +617,7 @@ def read_nr(*arg):
     nr = lineSDR[2]
     if rxNR == header:
         nr = lineSDR[2]
-    if debug == 2: print("NR is " + nb)
+    if debug == 2: print("NR is " + nr)
     else:
         rxNR = ""
     return nr
@@ -806,7 +806,7 @@ try:
     # radioSer.close()
 
     # if COM port communication problem
-except serialException:
+except SerialException:
     print("No communication to", radioPort, ", check configuration file and available ports on computer !")
     sys.exit(1)
     
@@ -925,12 +925,12 @@ while launched:
                     if flex:
                         SendToRadio("ZZRD;")        # Rit Down
                     else:
-                        SendToRadio("RD00025;")      # RIT down 5 Hz command
+                        SendToRadio("RD00025;")      # RIT down 25 Hz command
                 elif (control == 1) :   # RIT Up
                     if flex:
                         SendToRadio("ZZRU;")        # Rit Up
                     else:
-                        SendToRadio("RU00025;")            # RIT up 5 Hz command
+                        SendToRadio("RU00025;")            # RIT up 25 Hz command
             elif (status == WT_DJ_POTMEDIUMA) and flex:    # Pot. Medium A
                 # DSP Filtering Bandwidth for VFO A
                 SendToRadio("ZZFI0" + str(math.floor(7 * control / 127)) + ";")
@@ -1030,7 +1030,9 @@ while launched:
                 SendToRadio(strCat)
                 strMode = str(MODE(int(newMode)))
                 print("New mode is " + strMode)
-
+            elif status == WT_DJ_BTN_1B and control == 127:       # Button 1B for teAttst
+                SendToRadio("AT00;")
+                print("You push the 1B button")
             elif status == WT_DJ_BTN_4A and control == 127:       # Button 4A for test
                 SendToRadio("GT001;")
                 print("You push the 4A button")
