@@ -5,9 +5,9 @@ Python 3 script to interface the DJControl to TRXs:
 	
 	- Kenwood
 	
-	- SunSDR2pro	- Tested @F6BEE and @F6IFY
+	- SunSDR2pro	- Tested @F6BEE and @F6IFY better use the f6ifyTCI project.
 	
-	- SunSDR2-DX	- Tested @F5RRS
+	- SunSDR2-DX	- Tested @F5RRS better use the f6ifyTCI project.
 	
 	- Rohdes & Shwartz Transceivers - développement en cours...
 
